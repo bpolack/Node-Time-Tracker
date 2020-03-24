@@ -1,0 +1,33 @@
+{
+  "name": "ascent-events-ose",
+  "version": "1.0.0",
+  "description": "Hosted events calendar application",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bpolack/Ascent-Events-OSE.git"
+  },
+  "keywords": [
+    "ascent",
+    "events",
+    "calendar",
+    "open",
+    "source",
+    "edition"
+  ],
+  "author": "Braighton Polack",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bpolack/Ascent-Events-OSE/issues"
+  },
+  "homepage": "https://github.com/bpolack/Ascent-Events-OSE#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-handlebars": "^3.1.0",
+    "moment": "^2.24.0",
+    "mongoose": "^5.9.5"
+  }
+}
