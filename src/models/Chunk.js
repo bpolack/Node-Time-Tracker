@@ -7,7 +7,7 @@ let hourFromNow = function(){
 };
 
 //Create Schema
-const EventSchema = new Schema({
+const ChunkSchema = new Schema({
     title: {
         type: String,
         required: true
@@ -22,20 +22,16 @@ const EventSchema = new Schema({
         required: true,
         default: hourFromNow
     },
-    isAllDay: {
-        type: Boolean,
-        default: false
-    },
-    isFeatured: {
+    isStar: {
         type: Boolean,
         default: false
     },
     content: {
         type: String
     },
-    learnMoreLink: {
+    refLink: {
         type: String
     },
 });
 
-mongoose.model('events', EventSchema);
+mongoose.model('chunks', ChunkSchema);

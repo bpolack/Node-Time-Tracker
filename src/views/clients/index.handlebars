@@ -1,0 +1,31 @@
+<div class="container">
+    <h1>All Clients</h1>
+    
+    {{#each errors}}
+        <div class="alert alert-danger">{{errMsg}}</div>
+    {{else}}
+    {{/each}}
+
+    <div class="card-columns">
+        {{#each clients}}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h4>{{name}}</h4>
+                    <h6 class="card-subtitle mb-2 text-muted">{{website}}</h6>
+                </div>
+                <div class="card-header">
+                    Contact Name: {{contact}}
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">{{email}}</li>
+                    <li class="list-group-item">{{phone}}</li>
+                </ul>
+                <a href="/clients/edit/{{id}}" class="stretched-link"></a>
+            </div>
+        {{else}}
+            <div class="alert alert-warning" role="alert">
+                No Clients added yet.
+            </div>
+        {{/each}}
+    </div>
+</div>

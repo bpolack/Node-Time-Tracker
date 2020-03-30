@@ -6,9 +6,20 @@ A project for small businesses to track employee time, apply employee time to cl
 
 1. TBD
 
-## Usage
+## Roadmap
 
-1. TBD
+1. Add/View/Edit/Remove Clients
+2. Add/View/Edit/Remove Projects
+3. Create Modal popups for edit views
+4. Attach Projects to Clients
+5. User management & authentication
+6. Add Time
+7. Create "View All" Time (chronological order)
+8. Create "Week Overview" Time view
+9. Create "Month Overview" Time view
+10. Attach Time Chunks to Projects
+11. Reporting tools to view project time allocation
+12. User groups for Teams/Company time management
 
 Examples:
 ```

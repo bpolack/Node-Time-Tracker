@@ -1,0 +1,44 @@
+<div class="container">
+    {{#each errors}}
+        <div class="alert alert-danger">{{errMsg}}</div>
+    {{else}}
+
+    {{/each}}
+
+    <div class="card">
+        <div class="card-body">
+            <h3>Edit Client</h3>
+            <form action="/clients" method="post">
+                <div class="form-group">
+                    <label for="name">Client Name</label>
+                    <input type="text" name="name" class="form-control" value="{{client.name}}" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact">Contact Name</label>
+                    <input type="text" name="contact" class="form-control" value="{{client.contact}}">
+                </div>
+                <div class="form-group">
+                    <label for="website">Website</label>
+                    <input type="text" name="website" class="form-control" value="{{client.website}}">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="text" name="email" class="form-control" value="{{client.email}}">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="text" name="phone" class="form-control" value="{{client.phone}}">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" name="address" class="form-control" value="{{client.address}}">
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="isStar">
+                    <label class="form-check-label" for="isStar">Star Client</label>
+                </div>
+                <button type="submit" class="btn btn-primary my-3">Save</button>
+            </form>
+        </div>
+    </div>
+</div>
