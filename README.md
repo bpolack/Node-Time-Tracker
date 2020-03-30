@@ -2,7 +2,7 @@
 
 A project for small businesses to track employee time, apply employee time to client projects, and visualize project budgets and timelines.
 
-## Installation
+## Getting Started
 
 1. TBD
 
@@ -21,22 +21,20 @@ A project for small businesses to track employee time, apply employee time to cl
 11. Reporting tools to view project time allocation
 12. User groups for Teams/Company time management
 
-Examples:
-```
-This is a sample of program usage
-```
-
 ### Prerequisites
 
-NodeJS, Docker
+NPM, MongoDB
 
 ## Built With
 
-* Libraries used
+* Node
+* Express
+* Handlebars
+* Mongoose
 
 ## Authors
 
-* **[Braighton Polack](https://github.com/bpolack/)** - Developer of base functionality
+* **[Braighton Polack](https://github.com/bpolack/)** - Main dev
 
 See also the list of [contributors](https://github.com/bpolack/node-time-tracker/contributors) who participated in this project.
 
