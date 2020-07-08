@@ -2,3 +2,10 @@
     background-size: cover;
     background-position: center center;
 }
+.time-active #time-dropdown, .projects-active #project-dropdown, .clients-active #client-dropdown {
+    color: #fff;
+    background-color: #007bff;
+}
+.form-group .select2-container {
+    width:100%!important;
+}

@@ -1,10 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const moment = require('moment');
-
-let hourFromNow = function(){
-    return moment().add(1, 'hour');
-};
 
 //Create Schema
 const ProjectSchema = new Schema({
@@ -12,10 +7,28 @@ const ProjectSchema = new Schema({
         type: String,
         required: true
     },
+    client: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Client',
+        default: null
+    },
     isStar: {
         type: Boolean,
         default: false
     },
+    notes: {
+        type: String,
+    },
+    dateMod: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    dateCreate: {
+        type: Date,
+        required: true,
+        default: Date.now
+    }
 });
 
 mongoose.model('projects', ProjectSchema);

@@ -1,10 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const moment = require('moment');
-
-let hourFromNow = function(){
-    return moment().add(1, 'hour');
-};
 
 //Create Schema
 const ClientSchema = new Schema({
@@ -32,6 +27,11 @@ const ClientSchema = new Schema({
         type: String,
     },
     dateMod: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    dateCreate: {
         type: Date,
         required: true,
         default: Date.now

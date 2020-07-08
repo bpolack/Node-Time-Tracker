@@ -1,5 +1,5 @@
 <div class="container">
-    <h1>All Clients</h1>
+    <h1>All Projects</h1>
     
     {{#each errors}}
         <div class="alert alert-danger">{{errMsg}}</div>
@@ -7,15 +7,15 @@
     {{/each}}
 
     <div class="card-columns">
-        {{#each clients}}
+        {{#each projects}}
             <div class="card mb-3">
                 <div class="card-header">
                     <div class="row">
                         <div class="col">
-                            <p class="py-2 mb-0">Client</p>
+                            <p class="py-2 mb-0">Project</p>
                         </div>
                         <div class="col text-right">
-                        <form onsubmit="confirm('Are you sure you want to delete this?')" method="post" action="/clients/{{id}}?_method=DELETE">
+                        <form onsubmit="confirm('Are you sure you want to delete this?')" method="post" action="/projects/{{id}}?_method=DELETE">
                             <input type="hidden" name="_method" value="DELETE">  
                             <button type="submit" class="btn btn-link text-danger">
                                 <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-trash-fill" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -28,20 +28,15 @@
                 </div>
                 <div class="position-relative">
                     <div class="card-body">
-                        <h4>{{name}}</h4>
-                        <h6 class="card-subtitle mb-2 text-muted">{{website}}</h6>
+                        <h4>{{title}}</h4>
+                        <h6 class="card-subtitle mb-2 text-muted">{{client}}</h6>
                     </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">Contact Name: {{contact}}</li>
-                        <li class="list-group-item">{{email}}</li>
-                        <li class="list-group-item">{{phone}}</li>
-                    </ul>
-                    <a href="/clients/edit/{{id}}" class="stretched-link"></a>
+                    <a href="/projects/edit/{{id}}" class="stretched-link"></a>
                 </div>
             </div>
         {{else}}
             <div class="card alert alert-warning" role="alert">
-                No Clients added yet.
+                No Projects added yet.
             </div>
         {{/each}}
     </div>

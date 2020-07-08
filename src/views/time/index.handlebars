@@ -1,0 +1,24 @@
+<div class="container">
+    <h1>Weekly View</h1>
+    
+    {{#each errors}}
+        <div class="alert alert-danger">{{errMsg}}</div>
+    {{else}}
+    {{/each}}
+
+    <div class="card-columns">
+        {{#each chunks}}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h4>{{title}}</h4>
+                    <h6 class="card-subtitle mb-2 text-muted">{{project}}</h6>
+                </div>
+                <a href="/time/edit/{{id}}" class="stretched-link"></a>
+            </div>
+        {{else}}
+            <div class="card alert alert-warning" role="alert">
+                No Time added yet.
+            </div>
+        {{/each}}
+    </div>
+</div>
