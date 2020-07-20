@@ -443,43 +443,29 @@ router.delete(`/${endpoints.projects}/:id`, (req, res) => {
     Time Chunk Routes and Processors
 **********
 */
-// Create Time Chunk Route
+// Create Main Time Route (Chunk data is not loaded directly from here, but from within the calendar)
 router.get(`/${endpoints.time}`, (req, res) => {
     let errors = [];
 
-    //Fetch all Time Chunks
-    Chunk.find({})
-        .sort({title: 'asc'})
-        .populate({path: 'project', model: Project})
-        .then(chunks => {
+    //Fetch all Projects for Select2 dropdowns
+    Project.find({})
+        .sort({title:'asc'})
+        .then(projects => {
             // Create context Object to pass only required data to user
-            const context = {
-                usersChunks: chunks.map(chunk => {
-                    if (chunk.project) {
-                        return {
-                            id: chunk.id,
-                            title: chunk.title,
-                            startDate: chunk.startDate,
-                            endDate: chunk.endDate,
-                            project: chunk.project.title
-                        }
-                    }
-                    else {
-                        return {
-                            id: chunk.id,
-                            title: chunk.title,
-                            startDate: chunk.startDate,
-                            endDate: chunk.endDate,
-                            project: ''
-                        }
+            const projectsContext = {
+                usersProjects: projects.map(project => {
+                    return {
+                        id: project.id,
+                        title: project.title
                     }
                 })
             }
             res.render(endpoints.time + '/index', {
                 title: appTitle,
-                chunks: context.usersChunks,
+                projects: projectsContext.usersProjects,
                 endpoint: endpoints.time
             });
+
         })
         .catch(err => {
             errors.push({ errMsg: "DB Fetch Error: " + err });
@@ -630,34 +616,116 @@ router.put(`/${endpoints.time}/:id`, (req, res) => {
         _id: req.params.id
     })
     .then(chunk => {
-        chunk.title = req.body.title;
+
         chunk.startDate = req.body.startDate;
         chunk.endDate = req.body.endDate;
-        chunk.content = req.body.content;
-        chunk.refLink = req.body.refLink;
-        chunk.project = req.body.project;
+        if (req.body.process != 'dates') { // if incoming request is not for dates only
+            chunk.title = req.body.title;
+            chunk.content = req.body.content;
+            chunk.refLink = req.body.refLink;
+            if (req.body.project != "0") {
+                chunk.project = req.body.project;
+            }
+        }
 
         chunk.save()
             .then(chunk => {
-                res.redirect(`/${endpoints.time}`);
+                if (req.body.noRedirect) {
+                    res.send({ message: 'Success' });
+                }
+                else {
+                    res.redirect(`/${endpoints.time}`);
+                }
             })
             .catch(err => {
-                errors.push({ errMsg: "DB Save Error: " + err });
-                res.render(endpoints.time + '/edit', {
-                    title: appTitle,
-                    errors: errors,
-                    endpoint: endpoints.time
-                });
+                if (req.body.noRedirect) {
+                    res.send({ message: 'DB Save Error: ' + err });
+                }
+                else {
+                    errors.push({ errMsg: "DB Save Error: " + err });
+                    res.render(endpoints.time + '/edit', {
+                        title: appTitle,
+                        errors: errors,
+                        endpoint: endpoints.time
+                    });
+                }
+                
             });
     })
     .catch(err => {
-        errors.push({ errMsg: "ID Not Found Error: " + err });
+        errors.push({ errMsg: "Single Time ID Not Found Error: " + err });
         res.render(endpoints.time + '/edit', {
             title: appTitle,
             errors: errors,
             endpoint: endpoints.time
         });
     });
+    
+});
+
+// Create Time Chunk Data Connector Route to handle all calendar views
+router.post(`/${endpoints.time}/data`, (req, res) => {
+    let errors = [];
+
+    //Fetch all Time Chunks
+    Chunk.find({
+            $or:[
+                {$and:[
+                    {startDate:{
+                        $lte: req.body.end
+                    }},
+                    {startDate:{
+                        $gte: req.body.start
+                    }}
+                ]},
+                {$and:[
+                    {endDate:{
+                        $lte: req.body.end
+                    }},
+                    {endDate:{
+                        $gte: req.body.start
+                    }}
+                ]},
+            ]
+        })
+        .sort({title: 'asc'})
+        .populate({path: 'project', model: Project})
+        .then(chunks => {
+            // Create context Object to pass only required data to user
+            const context = {
+                usersChunks: chunks.map(chunk => {
+                    if (chunk.project) {
+                        return {
+                            id: chunk.id,
+                            title: chunk.title,
+                            start: chunk.startDate,
+                            end: chunk.endDate,
+                            content: chunk.content,
+                            project: chunk.project.title
+                        }
+                    }
+                    else {
+                        return {
+                            id: chunk.id,
+                            title: chunk.title,
+                            start: chunk.startDate,
+                            end: chunk.endDate,
+                            content: chunk.content,
+                            project: ''
+                        }
+                    }
+                })
+            }
+            res.json(context.usersChunks);
+        })
+        .catch(err => {
+            errors.push({ errMsg: "Data Fetch Error: " + err });
+            res.render(endpoints.time + '/index', {
+                title: appTitle,
+                errors: errors,
+                endpoint: endpoints.time
+            });
+        });
     
 });
 
