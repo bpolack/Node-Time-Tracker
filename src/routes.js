@@ -215,7 +215,7 @@ router.get(`/${endpoints.projects}`, (req, res) => {
 
     //Fetch all Projects
     Project.find({})
-        .sort({title: 'asc'})
+        .sort({dateMod: 'desc'})
         .populate({path: 'client', model: Client})
         .then(projects => {
             // Create context Object to pass only required data to user
@@ -312,7 +312,6 @@ router.post(`/${endpoints.projects}`, (req, res) => {
                 notes: req.body.notes,
                 client: req.body.client
             }
-            console.log('Truthy client val');
         }
         else {
             newProject = {
@@ -449,7 +448,8 @@ router.get(`/${endpoints.time}`, (req, res) => {
 
     //Fetch all Projects for Select2 dropdowns
     Project.find({})
-        .sort({title:'asc'})
+        .sort({dateMod:'desc'})
+        .populate({path: 'client', model: Client})
         .then(projects => {
             // Create context Object to pass only required data to user
             const projectsContext = {
@@ -483,7 +483,7 @@ router.get(`/${endpoints.time}/add`, (req, res) => {
 
     //Fetch all Projects
     Project.find({})
-    .sort({title:'asc'})
+    .sort({dateMod:'desc'})
     .then(projects => {
         // Create context Object to pass only required data to user
         const context = {
@@ -529,18 +529,35 @@ router.post(`/${endpoints.time}`, (req, res) => {
     }
     else {
         // Valid, insert into db
-        const newChunk = {
-            title: req.body.title,
-            startDate: req.body.startDate,
-            endDate: req.body.endDate,
-            content: req.body.content,
-            refLink: req.body.refLink,
-            project: req.body.project
+        let newChunk;
+        if (req.body.project != '0') {
+            newChunk = {
+                title: req.body.title,
+                startDate: req.body.startDate,
+                endDate: req.body.endDate,
+                content: req.body.content,
+                refLink: req.body.refLink,
+                project: req.body.project
+            }
+        }
+        else {
+            newChunk = {
+                title: req.body.title,
+                startDate: req.body.startDate,
+                endDate: req.body.endDate,
+                content: req.body.content,
+                refLink: req.body.refLink
+            }
         }
         new Chunk(newChunk)
             .save()
             .then(chunk => {
-                res.redirect(`/${endpoints.time}`);
+                if (req.body.noRedirect) {
+                    res.send({ message: 'Success' });
+                }
+                else {
+                    res.redirect(`/${endpoints.time}`);
+                }
             })
             .catch(err => {
                 errors.push({ errMsg: "DB Save Error: " + err });
@@ -694,25 +711,14 @@ router.post(`/${endpoints.time}/data`, (req, res) => {
             // Create context Object to pass only required data to user
             const context = {
                 usersChunks: chunks.map(chunk => {
-                    if (chunk.project) {
-                        return {
-                            id: chunk.id,
-                            title: chunk.title,
-                            start: chunk.startDate,
-                            end: chunk.endDate,
-                            content: chunk.content,
-                            project: chunk.project.title
-                        }
-                    }
-                    else {
-                        return {
-                            id: chunk.id,
-                            title: chunk.title,
-                            start: chunk.startDate,
-                            end: chunk.endDate,
-                            content: chunk.content,
-                            project: ''
-                        }
+                    return {
+                        id: chunk.id,
+                        title: chunk.title,
+                        start: chunk.startDate,
+                        end: chunk.endDate,
+                        content: chunk.content,
+                        refLink: chunk.refLink,
+                        project: chunk.project
                     }
                 })
             }
