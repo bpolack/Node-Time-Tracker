@@ -7,11 +7,10 @@
     {{/each}}
 
     <div id='calendar'></div>
-
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addTimeModal">Add Time</button>
+ 
     <div class="modal fade" id="addTimeModal" tabindex="-1" role="dialog" aria-labelledby="addTimeModal" aria-hidden="true">
         <div class="modal-dialog" role="document">
-            <form method="post" action="/time">
+            <form>
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Add Time</h5>
@@ -19,19 +18,19 @@
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <input type="text" name="title" class="form-control" placeholder="Add title" value="{{postbody.title}}" required>
+                            <input type="text" name="title" class="form-control" placeholder="Add title" value="" required>
                         </div>
                         <div class="row">
                             <div class="col-sm">
                                 <div class="form-group">
                                     <label for="startDate">Start</label>
-                                    <input type="text" class="form-control flatpickr-datetime" name="startDate" value="{{postbody.startDate}}" placeholder="Start Time">
+                                    <input type="text" id="addTimeStart" class="form-control flatpickr-datetime" name="startDate" value="" placeholder="Start Time">
                                 </div>
                             </div>
                             <div class="col-sm">
                                 <div class="form-group">
                                     <label for="endDate">End</label>
-                                    <input type="text" class="form-control flatpickr-datetime" name="endDate" value="{{postbody.endDate}}" placeholder="End Time">
+                                    <input type="text" id="addTimeEnd" class="form-control flatpickr-datetime" name="endDate" value="" placeholder="End Time">
                                 </div>
                             </div>
                         </div>
@@ -47,11 +46,11 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <textarea name="content" placeholder="Description" class="form-control" rows="4">{{postbody.content}}</textarea>
+                            <textarea name="content" placeholder="Description" class="form-control" rows="4"></textarea>
                         </div>
                         <div class="form-group">
                             <label for="refLink">Reference Link</label>
-                            <input type="text" name="refLink" class="form-control" value="{{postbody.refLink}}">
+                            <input type="text" name="refLink" class="form-control" value="">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -62,5 +61,58 @@
             </form>
         </div>
     </div>
-
+    <div class="modal fade" id="editTimeModal" tabindex="-1" role="dialog" aria-labelledby="editTimeModal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form>
+                <input type="hidden" name="timeid" value="">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Time</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <input type="text" name="title" class="form-control" placeholder="Add title" value="" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm">
+                                <div class="form-group">
+                                    <label for="startDate">Start</label>
+                                    <input type="text" id="editTimeStart" class="form-control flatpickr-datetime" name="startDate" value="" placeholder="Start Time">
+                                </div>
+                            </div>
+                            <div class="col-sm">
+                                <div class="form-group">
+                                    <label for="endDate">End</label>
+                                    <input type="text" id="editTimeEnd" class="form-control flatpickr-datetime" name="endDate" value="" placeholder="End Time">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="project"> Assign to Project</label>
+                            <select class="select-basic-single" name="project" id="editTimeSelect2">
+                                <option value="0">None</option>
+                                {{#each projects}}
+                                    <option value="{{id}}">{{title}}</option>
+                                {{else}}
+                                    
+                                {{/each}}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="content" placeholder="Description" class="form-control" rows="4"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="refLink">Reference Link</label>
+                            <input type="text" name="refLink" class="form-control" value="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Confirm</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
