@@ -9,3 +9,8 @@
 .form-group .select2-container {
     width:100%!important;
 }
+@media only screen and (min-width: 800px) {
+    .add-button-li {
+        margin-left: auto!important;
+    }
+}

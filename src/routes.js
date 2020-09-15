@@ -1,14 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
+const passport = require('passport');
+const bcrypt = require('bcrypt');
 
 // Route related constants
+const saltRounds = 12;
 const appTitle = 'Node Time Tracker';
-const endpoints = {time:'time', projects:'projects', clients:'clients'};
+const endpoints = { time: 'time', projects: 'projects', clients: 'clients' };
+const { userValidationRules, validate } = require('./config/validator.js')
+const { checkAuth } = require('./config/passport');
+//const {check, validationResult} = require('express-validator');
 
+// Load mongoose models
+require('./models/User');
 require('./models/Chunk');
 require('./models/Client');
 require('./models/Project');
+const User = mongoose.model('users');
 const Chunk = mongoose.model('chunks');
 const Client = mongoose.model('clients');
 const Project = mongoose.model('projects');
@@ -17,15 +26,89 @@ const Project = mongoose.model('projects');
 router.get('/', (req, res) => {
     res.render('index', {
         title: appTitle,
-        endpoint: `/${endpoints.time}`
+        endpoint: endpoints.time
     });
+});
+
+// Registration Route
+router.get('/sign-up', (req, res) => {
+    res.render('sign-up', {
+        title: appTitle,
+        endpoint: endpoints.time,
+        error: req.flash('error')
+    });
+});
+// Registration Create User Route
+router.post('/sign-up', userValidationRules(), validate, (req, res) => {
+
+    bcrypt.hash(req.body.password, saltRounds) // Migrate this to a passport strategy, move hash to User Schema method
+        .then(hash => {
+            // Valid, insert into db
+            const newUser = {
+                email: req.body.email,
+                hash: hash,
+                firstname: req.body.firstname,
+                lastname: req.body.lastname,
+            }
+            new User(newUser)
+                .save()
+                .then(user => {
+                    req.flash('success', 'New Account Created, Please Log In');
+                    res.redirect('/login');
+                })
+                .catch(err => {
+                    req.flash('error', 'DB Save Error: ' + err);
+
+                    res.render('sign-up', {
+                        title: appTitle,
+                        error: req.flash('error'),
+                        postbody: req.body,
+                        endpoint: endpoints.time
+                    });
+                });
+        })
+        .catch(err => {
+            req.flash('error', 'Password Hashing Error - Please contact admin.');
+            console.error('Password Hash Err: ' + err);
+            res.render('sign-up', {
+                title: appTitle,
+                error: req.flash('error'),
+                endpoint: endpoints.time
+            });
+        });
+});
+
+// Login Route
+router.get('/login', (req, res) => {
+    res.render('login', {
+        title: appTitle,
+        endpoint: endpoints.time,
+        error: req.flash('error'),
+        success: req.flash('success'),
+    });
+});
+router.post('/login', 
+    passport.authenticate('local-login', {
+        failureRedirect: '/login',
+        failureFlash: true
+    }), 
+    (req, res) => {
+        res.redirect('/clients');
+    }
+);
+
+// Log Out Route
+router.get('/logout', function(req, res){
+    req.logout();
+    req.flash('message', 'You have been signed out');
+    res.redirect('/login');
 });
 
 // About Route
 router.get('/how-it-works', (req, res) => {
     res.render('how-it-works', {
         title: appTitle,
-        endpoint: `/${endpoints.time}`
+        endpoint: endpoints.time
     });
 });
 
@@ -35,12 +118,12 @@ router.get('/how-it-works', (req, res) => {
 **********
 */
 // Create Clients Route
-router.get(`/${endpoints.clients}`, (req, res) => {
+router.get(`/${endpoints.clients}`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch all Clients
     Client.find({})
-        .sort({name:'asc'})
+        .sort({ name: 'asc' })
         .then(clients => {
             // Create context Object to pass only required data to user
             const context = {
@@ -69,11 +152,11 @@ router.get(`/${endpoints.clients}`, (req, res) => {
                 endpoint: endpoints.clients
             });
         });
-    
+
 });
 
 // Create Client 'Add' Route
-router.get(`/${endpoints.clients}/add`, (req, res) => {
+router.get(`/${endpoints.clients}/add`, checkAuth, (req, res) => {
     res.render(endpoints.clients + '/add', {
         title: appTitle,
         endpoint: endpoints.clients
@@ -81,7 +164,7 @@ router.get(`/${endpoints.clients}/add`, (req, res) => {
 });
 
 // Process Client Add Form
-router.post(`/${endpoints.clients}`, (req, res) => {
+router.post(`/${endpoints.clients}`, checkAuth, (req, res) => {
     let errors = [];
 
     // Server side form validation
@@ -125,7 +208,7 @@ router.post(`/${endpoints.clients}`, (req, res) => {
 });
 
 // Create Client 'Edit' Route
-router.get(`/${endpoints.clients}/edit/:id`, (req, res) => {
+router.get(`/${endpoints.clients}/edit/:id`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch single Client
@@ -160,7 +243,7 @@ router.get(`/${endpoints.clients}/edit/:id`, (req, res) => {
 });
 
 // Process Client Edit Form
-router.put(`/${endpoints.clients}/:id`, (req, res) => {
+router.put(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
     let errors = [];
 
     Client.findOne({ _id: req.params.id })
@@ -197,8 +280,8 @@ router.put(`/${endpoints.clients}/:id`, (req, res) => {
 });
 
 // Process Client Delete Route
-router.delete(`/${endpoints.clients}/:id`, (req, res) => {
-    Client.deleteOne({ _id:req.params.id })
+router.delete(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
+    Client.deleteOne({ _id: req.params.id })
         .then(() => {
             res.redirect(`/${endpoints.clients}`);
         });
@@ -209,14 +292,14 @@ router.delete(`/${endpoints.clients}/:id`, (req, res) => {
     Project Routes and Processors
 **********
 */
-// Create Projects Route
-router.get(`/${endpoints.projects}`, (req, res) => {
+// All Projects Route
+router.get(`/${endpoints.projects}`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch all Projects
     Project.find({})
-        .sort({dateMod: 'desc'})
-        .populate({path: 'client', model: Client})
+        .sort({ dateMod: 'desc' })
+        .populate({ path: 'client', model: Client })
         .then(projects => {
             // Create context Object to pass only required data to user
             const context = {
@@ -251,44 +334,44 @@ router.get(`/${endpoints.projects}`, (req, res) => {
                 endpoint: endpoints.projects
             });
         });
-    
+
 });
 
 // Create Project 'Add' Route
-router.get(`/${endpoints.projects}/add`, (req, res) => {
+router.get(`/${endpoints.projects}/add`, checkAuth, (req, res) => {
 
     //Fetch all Clients
     Client.find({})
-    .sort({name:'asc'})
-    .then(clients => {
-        // Create context Object to pass only required data to user
-        const context = {
-            usersClients: clients.map(client => {
-                return {
-                    id: client.id,
-                    name: client.name
-                }
-            })
-        }
-        res.render(endpoints.projects + '/add', {
-            title: appTitle,
-            clients: context.usersClients,
-            endpoint: endpoints.projects
+        .sort({ name: 'asc' })
+        .then(clients => {
+            // Create context Object to pass only required data to user
+            const context = {
+                usersClients: clients.map(client => {
+                    return {
+                        id: client.id,
+                        name: client.name
+                    }
+                })
+            }
+            res.render(endpoints.projects + '/add', {
+                title: appTitle,
+                clients: context.usersClients,
+                endpoint: endpoints.projects
+            });
+        })
+        .catch(err => {
+            errors.push({ errMsg: "DB Fetch Error: " + err });
+            res.render(endpoints.projects + '/add', {
+                title: appTitle,
+                errors: errors,
+                endpoint: endpoints.projects
+            });
         });
-    })
-    .catch(err => {
-        errors.push({ errMsg: "DB Fetch Error: " + err });
-        res.render(endpoints.projects + '/add', {
-            title: appTitle,
-            errors: errors,
-            endpoint: endpoints.projects
-        });
-    });
 
 });
 
 // Process Project Add Form
-router.post(`/${endpoints.projects}`, (req, res) => {
+router.post(`/${endpoints.projects}`, checkAuth, (req, res) => {
     let errors = [];
 
     // Server side form validation
@@ -319,7 +402,7 @@ router.post(`/${endpoints.projects}`, (req, res) => {
                 notes: req.body.notes
             }
         }
-        
+
         new Project(newProject)
             .save()
             .then(project => {
@@ -339,7 +422,7 @@ router.post(`/${endpoints.projects}`, (req, res) => {
 });
 
 // Create Project 'Edit' Route
-router.get(`/${endpoints.projects}/edit/:id`, (req, res) => {
+router.get(`/${endpoints.projects}/edit/:id`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch single Project
@@ -356,29 +439,29 @@ router.get(`/${endpoints.projects}/edit/:id`, (req, res) => {
             }
             //Fetch all Clients
             Client.find({})
-            .sort({name:'asc'})
-            .then(clients => {
-                // Create context Object to pass only required data to user
-                const clientsContext = {
-                    usersClients: clients.map(client => {
-                        return {
-                            id: client.id,
-                            name: client.name
-                        }
-                    })
-                }
-                res.render(endpoints.projects + '/edit', {
-                    title: appTitle,
-                    project: projectContext,
-                    clients: clientsContext.usersClients,
-                    endpoint: endpoints.projects
-                });
+                .sort({ name: 'asc' })
+                .then(clients => {
+                    // Create context Object to pass only required data to user
+                    const clientsContext = {
+                        usersClients: clients.map(client => {
+                            return {
+                                id: client.id,
+                                name: client.name
+                            }
+                        })
+                    }
+                    res.render(endpoints.projects + '/edit', {
+                        title: appTitle,
+                        project: projectContext,
+                        clients: clientsContext.usersClients,
+                        endpoint: endpoints.projects
+                    });
 
-            })
-            .catch(err => {
+                })
+                .catch(err => {
 
-            })
-            
+                })
+
         })
         .catch(err => {
             errors.push({ errMsg: "DB Fetch Error: " + err });
@@ -391,47 +474,47 @@ router.get(`/${endpoints.projects}/edit/:id`, (req, res) => {
 });
 
 // Process Project Edit Form
-router.put(`/${endpoints.projects}/:id`, (req, res) => {
+router.put(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
     let errors = [];
 
     Project.findOne({
         _id: req.params.id
     })
-    .then(project => {
-        project.title = req.body.title;
-        if (req.body.client != "0") {
-            project.client = req.body.client;
-        }
-        project.notes = req.body.notes;
-        project.dateMod = Date.now();
+        .then(project => {
+            project.title = req.body.title;
+            if (req.body.client != "0") {
+                project.client = req.body.client;
+            }
+            project.notes = req.body.notes;
+            project.dateMod = Date.now();
 
-        project.save()
-            .then(project => {
-                res.redirect(`/${endpoints.projects}`);
-            })
-            .catch(err => {
-                errors.push({ errMsg: "DB Save Error: " + err });
-                res.render(endpoints.projects + '/edit', {
-                    title: appTitle,
-                    errors: errors,
-                    endpoint: endpoints.projects
+            project.save()
+                .then(project => {
+                    res.redirect(`/${endpoints.projects}`);
+                })
+                .catch(err => {
+                    errors.push({ errMsg: "DB Save Error: " + err });
+                    res.render(endpoints.projects + '/edit', {
+                        title: appTitle,
+                        errors: errors,
+                        endpoint: endpoints.projects
+                    });
                 });
+        })
+        .catch(err => {
+            errors.push({ errMsg: "ID Not Found Error: " + err });
+            res.render(endpoints.projects + '/edit', {
+                title: appTitle,
+                errors: errors,
+                endpoint: endpoints.projects
             });
-    })
-    .catch(err => {
-        errors.push({ errMsg: "ID Not Found Error: " + err });
-        res.render(endpoints.projects + '/edit', {
-            title: appTitle,
-            errors: errors,
-            endpoint: endpoints.projects
         });
-    });
-    
+
 });
 
 // Process Project Delete Route
-router.delete(`/${endpoints.projects}/:id`, (req, res) => {
-    Project.deleteOne({ _id:req.params.id })
+router.delete(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
+    Project.deleteOne({ _id: req.params.id })
         .then(() => {
             res.redirect(`/${endpoints.projects}`);
         });
@@ -443,13 +526,13 @@ router.delete(`/${endpoints.projects}/:id`, (req, res) => {
 **********
 */
 // Create Main Time Route (Chunk data is not loaded directly from here, but from within the calendar)
-router.get(`/${endpoints.time}`, (req, res) => {
+router.get(`/${endpoints.time}`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch all Projects for Select2 dropdowns
     Project.find({})
-        .sort({dateMod:'desc'})
-        .populate({path: 'client', model: Client})
+        .sort({ dateMod: 'desc' })
+        .populate({ path: 'client', model: Client })
         .then(projects => {
             // Create context Object to pass only required data to user
             const projectsContext = {
@@ -475,44 +558,44 @@ router.get(`/${endpoints.time}`, (req, res) => {
                 endpoint: endpoints.time
             });
         });
-    
+
 });
 
 // Create Time Chunk 'Add' Route
-router.get(`/${endpoints.time}/add`, (req, res) => {
+router.get(`/${endpoints.time}/add`, checkAuth, (req, res) => {
 
     //Fetch all Projects
     Project.find({})
-    .sort({dateMod:'desc'})
-    .then(projects => {
-        // Create context Object to pass only required data to user
-        const context = {
-            usersProjects: projects.map(project => {
-                return {
-                    id: project.id,
-                    title: project.title
-                }
-            })
-        }
-        res.render(endpoints.time + '/add', {
-            title: appTitle,
-            projects: context.usersProjects,
-            endpoint: endpoints.time
+        .sort({ dateMod: 'desc' })
+        .then(projects => {
+            // Create context Object to pass only required data to user
+            const context = {
+                usersProjects: projects.map(project => {
+                    return {
+                        id: project.id,
+                        title: project.title
+                    }
+                })
+            }
+            res.render(endpoints.time + '/add', {
+                title: appTitle,
+                projects: context.usersProjects,
+                endpoint: endpoints.time
+            });
+        })
+        .catch(err => {
+            errors.push({ errMsg: "DB Fetch Error: " + err });
+            res.render(endpoints.time + '/add', {
+                title: appTitle,
+                errors: errors,
+                endpoint: endpoints.time
+            });
         });
-    })
-    .catch(err => {
-        errors.push({ errMsg: "DB Fetch Error: " + err });
-        res.render(endpoints.time + '/add', {
-            title: appTitle,
-            errors: errors,
-            endpoint: endpoints.time
-        });
-    });
 
 });
 
 // Process Time Chunk Add Form
-router.post(`/${endpoints.time}`, (req, res) => {
+router.post(`/${endpoints.time}`, checkAuth, (req, res) => {
     let errors = [];
 
     // Server side form validation
@@ -573,7 +656,7 @@ router.post(`/${endpoints.time}`, (req, res) => {
 });
 
 // Create Time Chunk 'Edit' Route
-router.get(`/${endpoints.time}/edit/:id`, (req, res) => {
+router.get(`/${endpoints.time}/edit/:id`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch single Project
@@ -591,29 +674,29 @@ router.get(`/${endpoints.time}/edit/:id`, (req, res) => {
             }
             //Fetch all Projects
             Project.find({})
-            .sort({title:'asc'})
-            .then(projects => {
-                // Create context Object to pass only required data to user
-                const projectsContext = {
-                    usersProjects: projects.map(project => {
-                        return {
-                            id: project.id,
-                            title: project.title
-                        }
-                    })
-                }
-                res.render(endpoints.time + '/edit', {
-                    title: appTitle,
-                    chunk: chunkContext,
-                    projects: projectsContext.usersProjects,
-                    endpoint: endpoints.time
-                });
+                .sort({ title: 'asc' })
+                .then(projects => {
+                    // Create context Object to pass only required data to user
+                    const projectsContext = {
+                        usersProjects: projects.map(project => {
+                            return {
+                                id: project.id,
+                                title: project.title
+                            }
+                        })
+                    }
+                    res.render(endpoints.time + '/edit', {
+                        title: appTitle,
+                        chunk: chunkContext,
+                        projects: projectsContext.usersProjects,
+                        endpoint: endpoints.time
+                    });
 
-            })
-            .catch(err => {
+                })
+                .catch(err => {
 
-            })
-            
+                })
+
         })
         .catch(err => {
             errors.push({ errMsg: "DB Fetch Error: " + err });
@@ -626,87 +709,96 @@ router.get(`/${endpoints.time}/edit/:id`, (req, res) => {
 });
 
 // Process Time Chunk Edit Form
-router.put(`/${endpoints.time}/:id`, (req, res) => {
+router.put(`/${endpoints.time}/:id`, checkAuth, (req, res) => {
     let errors = [];
 
     Chunk.findOne({
         _id: req.params.id
     })
-    .then(chunk => {
+        .then(chunk => {
 
-        chunk.startDate = req.body.startDate;
-        chunk.endDate = req.body.endDate;
-        if (req.body.process != 'dates') { // if incoming request is not for dates only
-            chunk.title = req.body.title;
-            chunk.content = req.body.content;
-            chunk.refLink = req.body.refLink;
-            if (req.body.project != "0") {
-                chunk.project = req.body.project;
+            chunk.startDate = req.body.startDate;
+            chunk.endDate = req.body.endDate;
+            if (req.body.process != 'dates') { // if incoming request is not for dates only
+                chunk.title = req.body.title;
+                chunk.content = req.body.content;
+                chunk.refLink = req.body.refLink;
+                if (req.body.project != "0") {
+                    chunk.project = req.body.project;
+                }
             }
-        }
 
-        chunk.save()
-            .then(chunk => {
-                if (req.body.noRedirect) {
-                    res.send({ message: 'Success' });
-                }
-                else {
-                    res.redirect(`/${endpoints.time}`);
-                }
-            })
-            .catch(err => {
-                if (req.body.noRedirect) {
-                    res.send({ message: 'DB Save Error: ' + err });
-                }
-                else {
-                    errors.push({ errMsg: "DB Save Error: " + err });
-                    res.render(endpoints.time + '/edit', {
-                        title: appTitle,
-                        errors: errors,
-                        endpoint: endpoints.time
-                    });
-                }
-                
+            chunk.save()
+                .then(chunk => {
+                    if (req.body.noRedirect) {
+                        res.send({ message: 'Success' });
+                    }
+                    else {
+                        res.redirect(`/${endpoints.time}`);
+                    }
+                })
+                .catch(err => {
+                    if (req.body.noRedirect) {
+                        res.send({ message: 'DB Save Error: ' + err });
+                    }
+                    else {
+                        errors.push({ errMsg: "DB Save Error: " + err });
+                        res.render(endpoints.time + '/edit', {
+                            title: appTitle,
+                            errors: errors,
+                            endpoint: endpoints.time
+                        });
+                    }
+
+                });
+        })
+        .catch(err => {
+            errors.push({ errMsg: "Single Time ID Not Found Error: " + err });
+            res.render(endpoints.time + '/edit', {
+                title: appTitle,
+                errors: errors,
+                endpoint: endpoints.time
             });
-    })
-    .catch(err => {
-        errors.push({ errMsg: "Single Time ID Not Found Error: " + err });
-        res.render(endpoints.time + '/edit', {
-            title: appTitle,
-            errors: errors,
-            endpoint: endpoints.time
         });
-    });
-    
+
 });
 
 // Create Time Chunk Data Connector Route to handle all calendar views
-router.post(`/${endpoints.time}/data`, (req, res) => {
+router.post(`/${endpoints.time}/data`, checkAuth, (req, res) => {
     let errors = [];
 
     //Fetch all Time Chunks
     Chunk.find({
-            $or:[
-                {$and:[
-                    {startDate:{
-                        $lte: req.body.end
-                    }},
-                    {startDate:{
-                        $gte: req.body.start
-                    }}
-                ]},
-                {$and:[
-                    {endDate:{
-                        $lte: req.body.end
-                    }},
-                    {endDate:{
-                        $gte: req.body.start
-                    }}
-                ]},
-            ]
-        })
-        .sort({title: 'asc'})
-        .populate({path: 'project', model: Project})
+        $or: [{
+                $and: [{
+                        startDate: {
+                            $lte: req.body.end
+                        }
+                    },
+                    {
+                        startDate: {
+                            $gte: req.body.start
+                        }
+                    }
+                ]
+            },
+            {
+                $and: [{
+                        endDate: {
+                            $lte: req.body.end
+                        }
+                    },
+                    {
+                        endDate: {
+                            $gte: req.body.start
+                        }
+                    }
+                ]
+            },
+        ]
+    })
+        .sort({ title: 'asc' })
+        .populate({ path: 'project', model: Project })
         .then(chunks => {
             // Create context Object to pass only required data to user
             const context = {
@@ -732,7 +824,7 @@ router.post(`/${endpoints.time}/data`, (req, res) => {
                 endpoint: endpoints.time
             });
         });
-    
+
 });
 
 
