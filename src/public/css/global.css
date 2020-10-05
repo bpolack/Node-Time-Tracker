@@ -2,6 +2,9 @@
     background-size: cover;
     background-position: center center;
 }
+.toast {
+    min-width: 260px;
+}
 .time-active #time-dropdown, .projects-active #project-dropdown, .clients-active #client-dropdown {
     color: #fff;
     background-color: #007bff;

@@ -84,6 +84,7 @@ router.get('/login', (req, res) => {
         title: appTitle,
         endpoint: endpoints.time,
         error: req.flash('error'),
+        message: req.flash('message'),
         success: req.flash('success'),
     });
 });
@@ -93,6 +94,7 @@ router.post('/login',
         failureFlash: true
     }), 
     (req, res) => {
+        req.flash('success', 'You are now logged in');
         res.redirect('/clients');
     }
 );
@@ -119,8 +121,6 @@ router.get('/how-it-works', (req, res) => {
 */
 // Create Clients Route
 router.get(`/${endpoints.clients}`, checkAuth, (req, res) => {
-    let errors = [];
-
     //Fetch all Clients
     Client.find({})
         .sort({ name: 'asc' })
@@ -141,15 +141,18 @@ router.get(`/${endpoints.clients}`, checkAuth, (req, res) => {
             res.render(endpoints.clients + '/index', {
                 title: appTitle,
                 clients: context.usersClients,
-                endpoint: endpoints.clients
+                endpoint: endpoints.clients,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
             res.render(endpoints.clients + '/index', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.clients
+                endpoint: endpoints.clients,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -159,24 +162,25 @@ router.get(`/${endpoints.clients}`, checkAuth, (req, res) => {
 router.get(`/${endpoints.clients}/add`, checkAuth, (req, res) => {
     res.render(endpoints.clients + '/add', {
         title: appTitle,
-        endpoint: endpoints.clients
+        endpoint: endpoints.clients,
+        error: req.flash('error'),
+        success: req.flash('success'),
     });
 });
 
 // Process Client Add Form
 router.post(`/${endpoints.clients}`, checkAuth, (req, res) => {
-    let errors = [];
 
     // Server side form validation
     if (!req.body.name) {
-        errors.push({ errMsg: "Client Name must not be empty" });
-    }
-    if (errors.length > 0) { //Return to form with errors
+        req.flash('error', 'Client name must not be empty');
+        //Return to form with errors
         res.render(endpoints.clients + '/add', {
             title: appTitle,
-            errors: errors,
             postbody: req.body,
-            endpoint: endpoints.clients
+            endpoint: endpoints.clients,
+            error: req.flash('error'),
+            success: req.flash('success'),
         });
     }
     else {
@@ -192,16 +196,18 @@ router.post(`/${endpoints.clients}`, checkAuth, (req, res) => {
         new Client(newClient)
             .save()
             .then(client => {
+                req.flash('success', 'New client added');
                 res.redirect(`/${endpoints.clients}`);
             })
             .catch(err => {
-                errors.push({ errMsg: "DB Save Error: " + err });
+                req.flash('error', "DB Save Error: " + err);
 
                 res.render(endpoints.clients + '/add', {
                     title: appTitle,
-                    errors: errors,
                     postbody: req.body,
-                    endpoint: endpoints.clients
+                    endpoint: endpoints.clients,
+                    error: req.flash('error'),
+                    success: req.flash('success'),
                 });
             });
     }
@@ -209,7 +215,6 @@ router.post(`/${endpoints.clients}`, checkAuth, (req, res) => {
 
 // Create Client 'Edit' Route
 router.get(`/${endpoints.clients}/edit/:id`, checkAuth, (req, res) => {
-    let errors = [];
 
     //Fetch single Client
     Client.findOne({ _id: req.params.id })
@@ -229,22 +234,25 @@ router.get(`/${endpoints.clients}/edit/:id`, checkAuth, (req, res) => {
             res.render(endpoints.clients + '/edit', {
                 title: appTitle,
                 client: context,
-                endpoint: endpoints.clients
+                endpoint: endpoints.clients,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
+
             res.render(endpoints.clients + '/edit', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.clients
+                endpoint: endpoints.clients,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 });
 
 // Process Client Edit Form
 router.put(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
-    let errors = [];
 
     Client.findOne({ _id: req.params.id })
         .then(client => {
@@ -258,23 +266,26 @@ router.put(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
 
             client.save()
                 .then(client => {
+                    req.flash('success', 'Client information updated');
                     res.redirect(`/${endpoints.clients}`);
                 })
                 .catch(err => {
-                    errors.push({ errMsg: "DB Save Error: " + err });
+                    req.flash('error', "DB Save Error: " + err);
                     res.render(endpoints.clients + '/edit', {
                         title: appTitle,
-                        errors: errors,
-                        endpoint: endpoints.clients
+                        endpoint: endpoints.clients,
+                        error: req.flash('error'),
+                        success: req.flash('success'),
                     });
                 });
         })
         .catch(err => {
-            errors.push({ errMsg: "ID Not Found Error: " + err });
+            req.flash('error', "ID Not Found Error: " + err);
             res.render(endpoints.clients + '/edit', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.clients
+                endpoint: endpoints.clients,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 });
@@ -283,6 +294,7 @@ router.put(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
 router.delete(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
     Client.deleteOne({ _id: req.params.id })
         .then(() => {
+            req.flash('success', 'Client has been deleted');
             res.redirect(`/${endpoints.clients}`);
         });
 });
@@ -294,7 +306,6 @@ router.delete(`/${endpoints.clients}/:id`, checkAuth, (req, res) => {
 */
 // All Projects Route
 router.get(`/${endpoints.projects}`, checkAuth, (req, res) => {
-    let errors = [];
 
     //Fetch all Projects
     Project.find({})
@@ -323,15 +334,18 @@ router.get(`/${endpoints.projects}`, checkAuth, (req, res) => {
             res.render(endpoints.projects + '/index', {
                 title: appTitle,
                 projects: context.usersProjects,
-                endpoint: endpoints.projects
+                endpoint: endpoints.projects,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
             res.render(endpoints.projects + '/index', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.projects
+                endpoint: endpoints.projects,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -356,15 +370,18 @@ router.get(`/${endpoints.projects}/add`, checkAuth, (req, res) => {
             res.render(endpoints.projects + '/add', {
                 title: appTitle,
                 clients: context.usersClients,
-                endpoint: endpoints.projects
+                endpoint: endpoints.projects,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
             res.render(endpoints.projects + '/add', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.projects
+                endpoint: endpoints.projects,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -372,18 +389,17 @@ router.get(`/${endpoints.projects}/add`, checkAuth, (req, res) => {
 
 // Process Project Add Form
 router.post(`/${endpoints.projects}`, checkAuth, (req, res) => {
-    let errors = [];
 
     // Server side form validation
     if (!req.body.title) {
-        errors.push({ errMsg: "Project Title must not be empty" });
-    }
-    if (errors.length > 0) { //Return to form with errors
+        req.flash('error', "Project title must not be empty" );
+        //Return to form with errors
         res.render(endpoints.projects + '/add', {
             title: appTitle,
-            errors: errors,
             postbody: req.body,
-            endpoint: endpoints.projects
+            endpoint: endpoints.projects,
+            error: req.flash('error'),
+            success: req.flash('success'),
         });
     }
     else {
@@ -406,16 +422,18 @@ router.post(`/${endpoints.projects}`, checkAuth, (req, res) => {
         new Project(newProject)
             .save()
             .then(project => {
+                req.flash('success', "New project created ");
                 res.redirect(`/${endpoints.projects}`);
             })
             .catch(err => {
-                errors.push({ errMsg: "DB Save Error: " + err });
+                req.flash('error', "DB Save Error: " + err);
 
                 res.render(endpoints.projects + '/add', {
                     title: appTitle,
-                    errors: errors,
                     postbody: req.body,
-                    endpoint: endpoints.projects
+                    endpoint: endpoints.projects,
+                    error: req.flash('error'),
+                    success: req.flash('success'),
                 });
             });
     }
@@ -423,7 +441,6 @@ router.post(`/${endpoints.projects}`, checkAuth, (req, res) => {
 
 // Create Project 'Edit' Route
 router.get(`/${endpoints.projects}/edit/:id`, checkAuth, (req, res) => {
-    let errors = [];
 
     //Fetch single Project
     Project.findOne({ _id: req.params.id })
@@ -454,28 +471,30 @@ router.get(`/${endpoints.projects}/edit/:id`, checkAuth, (req, res) => {
                         title: appTitle,
                         project: projectContext,
                         clients: clientsContext.usersClients,
-                        endpoint: endpoints.projects
+                        endpoint: endpoints.projects,
+                        error: req.flash('error'),
+                        success: req.flash('success'),
                     });
 
                 })
                 .catch(err => {
-
+                    
                 })
 
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
             res.render(endpoints.projects + '/edit', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.projects
+                endpoint: endpoints.projects,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 });
 
 // Process Project Edit Form
 router.put(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
-    let errors = [];
 
     Project.findOne({
         _id: req.params.id
@@ -490,23 +509,26 @@ router.put(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
 
             project.save()
                 .then(project => {
+                    req.flash('success', "Project updated successfully");
                     res.redirect(`/${endpoints.projects}`);
                 })
                 .catch(err => {
-                    errors.push({ errMsg: "DB Save Error: " + err });
+                    req.flash('error', "DB Save Error: " + err);
                     res.render(endpoints.projects + '/edit', {
                         title: appTitle,
-                        errors: errors,
-                        endpoint: endpoints.projects
+                        endpoint: endpoints.projects,
+                        error: req.flash('error'),
+                        success: req.flash('success'),
                     });
                 });
         })
         .catch(err => {
-            errors.push({ errMsg: "ID Not Found Error: " + err });
+            req.flash('error', "ID Not Found Error: " + err);
             res.render(endpoints.projects + '/edit', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.projects
+                endpoint: endpoints.projects,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -516,6 +538,7 @@ router.put(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
 router.delete(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
     Project.deleteOne({ _id: req.params.id })
         .then(() => {
+            req.flash('success', "Project deleted");
             res.redirect(`/${endpoints.projects}`);
         });
 });
@@ -527,7 +550,6 @@ router.delete(`/${endpoints.projects}/:id`, checkAuth, (req, res) => {
 */
 // Create Main Time Route (Chunk data is not loaded directly from here, but from within the calendar)
 router.get(`/${endpoints.time}`, checkAuth, (req, res) => {
-    let errors = [];
 
     //Fetch all Projects for Select2 dropdowns
     Project.find({})
@@ -546,16 +568,19 @@ router.get(`/${endpoints.time}`, checkAuth, (req, res) => {
             res.render(endpoints.time + '/index', {
                 title: appTitle,
                 projects: projectsContext.usersProjects,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
 
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
             res.render(endpoints.time + '/index', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -580,15 +605,18 @@ router.get(`/${endpoints.time}/add`, checkAuth, (req, res) => {
             res.render(endpoints.time + '/add', {
                 title: appTitle,
                 projects: context.usersProjects,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err);
             res.render(endpoints.time + '/add', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -596,18 +624,17 @@ router.get(`/${endpoints.time}/add`, checkAuth, (req, res) => {
 
 // Process Time Chunk Add Form
 router.post(`/${endpoints.time}`, checkAuth, (req, res) => {
-    let errors = [];
 
     // Server side form validation
     if (!req.body.title) {
-        errors.push({ errMsg: "Time Chunk Title must not be empty" });
-    }
-    if (errors.length > 0) { //Return to form with errors
+        req.flash('error', "Time Chunk Title must not be empty" );
+        //Return to form with errors
         res.render(endpoints.time + '/add', {
             title: appTitle,
-            errors: errors,
             postbody: req.body,
-            endpoint: endpoints.time
+            endpoint: endpoints.time,
+            error: req.flash('error'),
+            success: req.flash('success'),
         });
     }
     else {
@@ -639,17 +666,19 @@ router.post(`/${endpoints.time}`, checkAuth, (req, res) => {
                     res.send({ message: 'Success' });
                 }
                 else {
+                    req.flash('success', "New Time Added" );
                     res.redirect(`/${endpoints.time}`);
                 }
             })
             .catch(err => {
-                errors.push({ errMsg: "DB Save Error: " + err });
+                req.flash('error', "DB Save Error: " + err );
 
                 res.render(endpoints.time + '/add', {
                     title: appTitle,
-                    errors: errors,
                     postbody: req.body,
-                    endpoint: endpoints.time
+                    endpoint: endpoints.time,
+                    error: req.flash('error'),
+                    success: req.flash('success'),
                 });
             });
     }
@@ -657,7 +686,6 @@ router.post(`/${endpoints.time}`, checkAuth, (req, res) => {
 
 // Create Time Chunk 'Edit' Route
 router.get(`/${endpoints.time}/edit/:id`, checkAuth, (req, res) => {
-    let errors = [];
 
     //Fetch single Project
     Chunk.findOne({ _id: req.params.id })
@@ -689,7 +717,9 @@ router.get(`/${endpoints.time}/edit/:id`, checkAuth, (req, res) => {
                         title: appTitle,
                         chunk: chunkContext,
                         projects: projectsContext.usersProjects,
-                        endpoint: endpoints.time
+                        endpoint: endpoints.time,
+                        error: req.flash('error'),
+                        success: req.flash('success'),
                     });
 
                 })
@@ -699,18 +729,18 @@ router.get(`/${endpoints.time}/edit/:id`, checkAuth, (req, res) => {
 
         })
         .catch(err => {
-            errors.push({ errMsg: "DB Fetch Error: " + err });
+            req.flash('error', "DB Fetch Error: " + err );
             res.render(endpoints.time + '/edit', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 });
 
 // Process Time Chunk Edit Form
 router.put(`/${endpoints.time}/:id`, checkAuth, (req, res) => {
-    let errors = [];
 
     Chunk.findOne({
         _id: req.params.id
@@ -742,22 +772,24 @@ router.put(`/${endpoints.time}/:id`, checkAuth, (req, res) => {
                         res.send({ message: 'DB Save Error: ' + err });
                     }
                     else {
-                        errors.push({ errMsg: "DB Save Error: " + err });
+                        req.flash('error', "DB Save Error: " + err );
                         res.render(endpoints.time + '/edit', {
                             title: appTitle,
-                            errors: errors,
-                            endpoint: endpoints.time
+                            endpoint: endpoints.time,
+                            error: req.flash('error'),
+                            success: req.flash('success'),
                         });
                     }
 
                 });
         })
         .catch(err => {
-            errors.push({ errMsg: "Single Time ID Not Found Error: " + err });
+            req.flash('error', "Single Time ID Not Found Error: " + err );
             res.render(endpoints.time + '/edit', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 
@@ -765,7 +797,6 @@ router.put(`/${endpoints.time}/:id`, checkAuth, (req, res) => {
 
 // Create Time Chunk Data Connector Route to handle all calendar views
 router.post(`/${endpoints.time}/data`, checkAuth, (req, res) => {
-    let errors = [];
 
     //Fetch all Time Chunks
     Chunk.find({
@@ -817,11 +848,12 @@ router.post(`/${endpoints.time}/data`, checkAuth, (req, res) => {
             res.json(context.usersChunks);
         })
         .catch(err => {
-            errors.push({ errMsg: "Data Fetch Error: " + err });
+            req.flash('error', "Data Fetch Error: " + err );
             res.render(endpoints.time + '/index', {
                 title: appTitle,
-                errors: errors,
-                endpoint: endpoints.time
+                endpoint: endpoints.time,
+                error: req.flash('error'),
+                success: req.flash('success'),
             });
         });
 

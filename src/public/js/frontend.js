@@ -1,3 +1,6 @@
+//Toast initializer
+$('.toast').toast('show');
+
 // Flatpickr selector
 flatpickr(".flatpickr-datetime", {
     enableTime: true,
