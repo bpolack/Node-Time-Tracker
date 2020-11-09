@@ -2,10 +2,6 @@
 
 A project for small businesses to track employee time, apply employee time to client projects, and visualize project budgets and timelines.
 
-## Getting Started
-
-1. TBD
-
 ## Roadmap
 
 1. Add/View/Edit/Remove Clients :white_check_mark:
@@ -17,9 +13,9 @@ A project for small businesses to track employee time, apply employee time to cl
 7. Create "Week Overview" Time view :white_check_mark:
 8. Create "Month Overview" Time view :white_check_mark:
 9. Attach Time Chunks to Projects :white_check_mark:
-10. User management & authentication - in progress
+10. User authentication with Passport :white_check_mark:
 11. Reporting tools to view project time allocation
-12. User groups for Teams/Company time management
+12. User groups for Teams/Company collaborative time management
 13. Info Message and Error display system :white_check_mark:
 
 ### Prerequisites
@@ -43,7 +39,3 @@ See also the list of [contributors](https://github.com/bpolack/node-time-tracker
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
-
-## Acknowledgments
-
-* TBD
